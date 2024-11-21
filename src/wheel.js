@@ -233,25 +233,32 @@ export class Wheel {
         const endAngle = util.degRad(a.end + Constants.arcAdjust);
         const cornerRadius = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
 
-        if (cornerRadius > 0) {
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = cornerRadius;
+        ctx.beginPath();
 
-            ctx.beginPath();
+        if (cornerRadius > 0) {
+            // Вычисляем точки для создания кривой
+            const midAngle = (startAngle + endAngle) / 2;
+            // Точки на внешней дуге
+            const outerStart = {
+                x: this._center.x + Math.cos(startAngle) * radius,
+                y: this._center.y + Math.sin(startAngle) * radius,
+            };
+            const outerEnd = {
+                x: this._center.x + Math.cos(endAngle) * radius,
+                y: this._center.y + Math.sin(endAngle) * radius,
+            };
+            // Точка в центре сектора для контроля кривой
+            const controlPoint = {
+                x: this._center.x + Math.cos(midAngle) * (radius - cornerRadius),
+                y: this._center.y + Math.sin(midAngle) * (radius - cornerRadius),
+            };
+
+            // Рисуем путь
             ctx.moveTo(this._center.x, this._center.y);
-            ctx.arc(
-                this._center.x,
-                this._center.y,
-                radius - (cornerRadius/2),
-                startAngle,
-                endAngle
-            );
+            ctx.lineTo(outerStart.x, outerStart.y);
+            ctx.quadraticCurveTo(controlPoint.x, controlPoint.y, outerEnd.x, outerEnd.y);
             ctx.lineTo(this._center.x, this._center.y);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
         } else {
-            ctx.beginPath();
             ctx.moveTo(this._center.x, this._center.y);
             ctx.arc(
                 this._center.x,
@@ -260,9 +267,10 @@ export class Wheel {
                 startAngle,
                 endAngle
             );
-            ctx.closePath();
-            ctx.fill();
         }
+
+        ctx.closePath();
+        ctx.fill();
     }
   }
 
