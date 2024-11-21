@@ -222,20 +222,73 @@ export class Wheel {
   }
 
   drawItemBackgrounds(ctx, angles = []) {
-
     for (const [i, a] of angles.entries()) {
-
       const item = this._items[i];
-
+      
       ctx.fillStyle = item.backgroundColor ?? (
-        // Fall back to a value from the repeating set:
         this._itemBackgroundColors[i % this._itemBackgroundColors.length]
       );
 
-      ctx.fill(item.path);
+      // Создаем новый путь для секции с закругленными углами
+      const path = new Path2D();
+      const radius = this._actualRadius - (this.getScaledNumber(this._borderWidth) / 2);
+      const startAngle = util.degRad(a.start + Constants.arcAdjust);
+      const endAngle = util.degRad(a.end + Constants.arcAdjust);
+      
+      if (item.borderRadius > 0) {
+        const borderRadius = this.getScaledNumber(item.borderRadius);
+        
+        // Начальная точка на внешнем радиусе
+        const startX = this._center.x + Math.cos(startAngle) * (radius - borderRadius);
+        const startY = this._center.y + Math.sin(startAngle) * (radius - borderRadius);
+        
+        path.moveTo(this._center.x, this._center.y);
+        path.lineTo(startX, startY);
+        
+        // Рисуем закругленный угол
+        path.arc(
+          this._center.x + Math.cos(startAngle) * (radius - borderRadius),
+          this._center.y + Math.sin(startAngle) * (radius - borderRadius),
+          borderRadius,
+          startAngle - Math.PI,
+          startAngle
+        );
+        
+        // Рисуем внешнюю дугу
+        path.arc(
+          this._center.x,
+          this._center.y,
+          radius,
+          startAngle,
+          endAngle
+        );
+        
+        // Рисуем второй закругленный угол
+        path.arc(
+          this._center.x + Math.cos(endAngle) * (radius - borderRadius),
+          this._center.y + Math.sin(endAngle) * (radius - borderRadius),
+          borderRadius,
+          endAngle,
+          endAngle + Math.PI
+        );
+        
+        path.closePath();
+      } else {
+        // Стандартное рисование без скругления
+        path.moveTo(this._center.x, this._center.y);
+        path.arc(
+          this._center.x,
+          this._center.y,
+          radius,
+          startAngle,
+          endAngle
+        );
+        path.closePath();
+      }
 
+      ctx.fill(path);
+      item.path = path; // Сохраняем путь для использования в других методах
     }
-
   }
 
   drawItemImages(ctx, angles = []) {

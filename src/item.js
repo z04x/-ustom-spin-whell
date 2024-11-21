@@ -23,6 +23,7 @@ export class Item {
       this.init(Defaults.item);
     }
 
+    this._borderRadius = props.borderRadius || 0; // custom update
   }
 
   /**
@@ -235,6 +236,20 @@ export class Item {
    */
   getRandomAngle() {
     return util.getRandomFloat(this.getStartAngle(), this.getEndAngle());
+  }
+
+  // custom update
+  get borderRadius() {
+    return this._borderRadius;
+  }
+
+  set borderRadius(val) {
+    this._borderRadius = util.setProp({
+      val,
+      isValid: util.isNumber(val),
+      errorMessage: 'Item.borderRadius must be a number',
+      defaultValue: 0,
+    });
   }
 
 }
