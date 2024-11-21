@@ -224,70 +224,46 @@ export class Wheel {
   drawItemBackgrounds(ctx, angles = []) {
     for (const [i, a] of angles.entries()) {
       const item = this._items[i];
+      const radius = this._actualRadius - (this.getScaledNumber(this._borderWidth) / 2);
 
       ctx.fillStyle = item.backgroundColor ?? (
         this._itemBackgroundColors[i % this._itemBackgroundColors.length]
       );
 
-      // Создаем новый путь для секции с закругленными углами
       const path = new Path2D();
-      const radius = this._actualRadius - (this.getScaledNumber(this._borderWidth) / 2);
       const startAngle = util.degRad(a.start + Constants.arcAdjust);
       const endAngle = util.degRad(a.end + Constants.arcAdjust);
 
-      if (item.borderRadius > 0) {
-        const borderRadius = this.getScaledNumber(item.borderRadius);
+      // Добавляем скругление
+      const borderRadius = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
 
-        // Начальная точка на внешнем радиусе
-        const startX = this._center.x + Math.cos(startAngle) * (radius - borderRadius);
-        const startY = this._center.y + Math.sin(startAngle) * (radius - borderRadius);
-
-        path.moveTo(this._center.x, this._center.y);
-        path.lineTo(startX, startY);
-
-        // Рисуем закругленный угол
-        path.arc(
-          this._center.x + Math.cos(startAngle) * (radius - borderRadius),
-          this._center.y + Math.sin(startAngle) * (radius - borderRadius),
-          borderRadius,
-          startAngle - Math.PI,
-          startAngle
+      path.moveTo(this._center.x, this._center.y);
+      if (borderRadius > 0) {
+        // Внутренняя точка начала скругления
+        const innerStartX = this._center.x + Math.cos(startAngle) * borderRadius;
+        const innerStartY = this._center.y + Math.sin(startAngle) * borderRadius;
+        // Внешняя точка начала скругления
+        const outerStartX = this._center.x + Math.cos(startAngle) * (radius - borderRadius);
+        const outerStartY = this._center.y + Math.sin(startAngle) * (radius - borderRadius);
+        path.lineTo(innerStartX, innerStartY);
+        path.quadraticCurveTo(
+          outerStartX,
+          outerStartY,
+          this._center.x + Math.cos(startAngle) * radius,
+          this._center.y + Math.sin(startAngle) * radius
         );
-
-        // Рисуем внешнюю дугу
-        path.arc(
-          this._center.x,
-          this._center.y,
-          radius,
-          startAngle,
-          endAngle
-        );
-
-        // Рисуем второй закругленный угол
-        path.arc(
-          this._center.x + Math.cos(endAngle) * (radius - borderRadius),
-          this._center.y + Math.sin(endAngle) * (radius - borderRadius),
-          borderRadius,
-          endAngle,
-          endAngle + Math.PI
-        );
-
-        path.closePath();
       } else {
-        // Стандартное рисование без скругления
-        path.moveTo(this._center.x, this._center.y);
-        path.arc(
-          this._center.x,
-          this._center.y,
-          radius,
-          startAngle,
-          endAngle
+        path.lineTo(
+          this._center.x + Math.cos(startAngle) * radius,
+          this._center.y + Math.sin(startAngle) * radius
         );
-        path.closePath();
       }
 
+      path.arc(this._center.x, this._center.y, radius, startAngle, endAngle);
+      path.closePath();
+
       ctx.fill(path);
-      item.path = path; // Сохраняем путь для использования в других методах
+      item.path = path;
     }
   }
 
@@ -447,84 +423,44 @@ export class Wheel {
   }
 
   drawItemLabels(ctx, angles = []) {
-
-    const actualItemLabelBaselineOffset = this._itemLabelFontSize * -this.itemLabelBaselineOffset;
-    const actualDebugLineWidth = this.getScaledNumber(1);
-    const actualLabelStrokeWidth = this.getScaledNumber(this._itemLabelStrokeWidth * 2);
-
     for (const [i, a] of angles.entries()) {
+        const item = this._items[i];
+        if (!item.label) continue;
 
-      const item = this._items[i];
+        const angle = a.start + ((a.end - a.start) / 2);
+        const labelRadius = this._actualRadius * this.itemLabelRadius;
 
-      const actualLabelColor = item.labelColor
-        || (this._itemLabelColors[i % this._itemLabelColors.length] // Fall back to a value from the repeating set.
-        || 'transparent'); // Handle empty string/undefined.
-
-      if (item.label.trim() === '' || actualLabelColor === 'transparent') continue;
-
-      ctx.save();
-
-      ctx.clip(item.path);
-
-      const angle = a.start + ((a.end - a.start) / 2);
-
-      ctx.translate(
-        this._center.x + Math.cos(util.degRad(angle + Constants.arcAdjust)) * (this._actualRadius * this.itemLabelRadius),
-        this._center.y + Math.sin(util.degRad(angle + Constants.arcAdjust)) * (this._actualRadius * this.itemLabelRadius)
-      );
-
-      ctx.rotate(util.degRad(angle + Constants.arcAdjust));
-
-      ctx.rotate(util.degRad(this.itemLabelRotation));
-
-
-      if (this.debug) {
         ctx.save();
+        ctx.translate(
+            this._center.x + Math.cos(util.degRad(angle + Constants.arcAdjust)) * labelRadius,
+            this._center.y + Math.sin(util.degRad(angle + Constants.arcAdjust)) * labelRadius
+        );
 
-        let alignAdjust = 0;
-        if (this.itemLabelAlign === 'left') {
-          alignAdjust = this._labelMaxWidth;
-        } else if (this.itemLabelAlign === 'center') {
-          alignAdjust = this._labelMaxWidth / 2;
+        // Поддержка HTML
+        if (item.label.includes('<')) {
+            const temp = document.createElement('div');
+            temp.innerHTML = item.label;
+            const spans = temp.getElementsByTagName('span');
+
+            let x = 0;
+            const y = 0;
+
+            for (const span of spans) {
+                ctx.font = span.style.fontSize || this._itemLabelFontSize + 'px ' + this.itemLabelFont;
+                ctx.fillStyle = span.style.color || (item.labelColor ?? this._itemLabelColors[i % this._itemLabelColors.length]);
+
+                const metrics = ctx.measureText(span.textContent);
+                ctx.fillText(span.textContent, x, y);
+                x += metrics.width;
+            }
+        } else {
+            // Обычный текст
+            ctx.fillStyle = item.labelColor ?? this._itemLabelColors[i % this._itemLabelColors.length];
+            ctx.fillText(item.label, 0, 0);
         }
 
-        // Draw label baseline
-        ctx.beginPath();
-        ctx.moveTo(alignAdjust, 0);
-        ctx.lineTo(-this._labelMaxWidth + alignAdjust, 0);
-        ctx.strokeStyle = Constants.Debugging.labelBoundingBoxColor;
-        ctx.lineWidth = actualDebugLineWidth;
-        ctx.stroke();
-
-        // Draw label bounding box
-        ctx.strokeRect(alignAdjust, -this._itemLabelFontSize / 2, -this._labelMaxWidth, this._itemLabelFontSize);
-
         ctx.restore();
-      }
-
-      if (this._itemLabelStrokeWidth > 0) {
-        ctx.lineWidth = actualLabelStrokeWidth;
-        ctx.strokeStyle = this._itemLabelStrokeColor;
-        ctx.lineJoin = 'round';
-        ctx.strokeText(item.label, 0, actualItemLabelBaselineOffset);
-      }
-
-      ctx.fillStyle = actualLabelColor;
-      ctx.fillText(item.label, 0, actualItemLabelBaselineOffset);
-
-      if (this.debug) {
-        // Draw label anchor point
-        const circleDiameter = this.getScaledNumber(2);
-        ctx.beginPath();
-        ctx.arc(0, 0, circleDiameter, 0, 2 * Math.PI);
-        ctx.fillStyle = Constants.Debugging.labelRadiusColor;
-        ctx.fill();
-      }
-
-      ctx.restore();
-
     }
-
   }
 
   drawDebugDragPoints(ctx) {
