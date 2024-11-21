@@ -233,32 +233,25 @@ export class Wheel {
         const endAngle = util.degRad(a.end + Constants.arcAdjust);
         const cornerRadius = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
 
-        ctx.beginPath();
-
         if (cornerRadius > 0) {
-            const centerX = this._center.x;
-            const centerY = this._center.y;
-            const outerStart = {
-                x: centerX + Math.cos(startAngle) * radius,
-                y: centerY + Math.sin(startAngle) * radius,
-            };
-            const outerEnd = {
-                x: centerX + Math.cos(endAngle) * radius,
-                y: centerY + Math.sin(endAngle) * radius,
-            };
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = cornerRadius;
 
-            ctx.moveTo(centerX, centerY);
-            ctx.arcTo(
-                outerStart.x, outerStart.y,
-                outerEnd.x, outerEnd.y,
-                cornerRadius
+            ctx.beginPath();
+            ctx.moveTo(this._center.x, this._center.y);
+            ctx.arc(
+                this._center.x,
+                this._center.y,
+                radius - (cornerRadius/2),
+                startAngle,
+                endAngle
             );
-            ctx.arcTo(
-                outerEnd.x, outerEnd.y,
-                centerX, centerY,
-                cornerRadius
-            );
+            ctx.lineTo(this._center.x, this._center.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
         } else {
+            ctx.beginPath();
             ctx.moveTo(this._center.x, this._center.y);
             ctx.arc(
                 this._center.x,
@@ -267,15 +260,8 @@ export class Wheel {
                 startAngle,
                 endAngle
             );
-        }
-
-        ctx.closePath();
-        ctx.fill();
-
-        if (this._borderWidth > 0) {
-            ctx.strokeStyle = this._borderColor;
-            ctx.lineWidth = this.getScaledNumber(this._borderWidth);
-            ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
         }
     }
   }
