@@ -93,7 +93,6 @@ function registerPointerEvents(wheel = {}) {
       });
     }
 
-
     function onPointerUp(e = {}) {
       e.preventDefault();
       canvas.releasePointerCapture(e.pointerId);
