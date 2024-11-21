@@ -2,11 +2,46 @@
 
 # Spin Wheel
 
+> This is a fork of the original [CrazyTim/spin-wheel](https://github.com/CrazyTim/spin-wheel) library with additional styling capabilities.
+
 [![GitHub tag](https://img.shields.io/github/tag/CrazyTim/spin-wheel)](https://img.shields.io/github/v/tag/CrazyTim/spin-wheel.svg?sort=semver "View latest release")
 ![maturity stable badge](https://img.shields.io/badge/maturity-stable-blue)
 [![License](https://img.shields.io/badge/license-MIT-blue)](#license "View license")
 
 An easy to use, themeable component for randomising choices and prizes.
+
+## New Features
+
+### Border Radius Support
+You can now add rounded corners to wheel sections by specifying `borderRadius` for individual items:
+
+```javascript
+const wheel = new Wheel(container, {
+  items: [
+    { 
+      label: 'Prize 1',
+      backgroundColor: '#ff0000',
+      borderRadius: 10 // Rounded corners (in pixels)
+    },
+    { 
+      label: 'Prize 2',
+      backgroundColor: '#00ff00',
+      borderRadius: 15 // Different radius for each section
+    },
+    { 
+      label: 'Prize 3',
+      backgroundColor: '#0000ff',
+      borderRadius: 0  // No rounding
+    }
+  ]
+});
+```
+
+### Border Radius Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| borderRadius | number | 0 | The radius of the rounded corners in pixels. Set to 0 for no rounding. |
 
 ## Features
 
