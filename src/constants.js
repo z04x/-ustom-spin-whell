@@ -29,6 +29,7 @@ export const Defaults = Object.freeze({
   wheel: {
     borderColor: '#000',
     borderWidth: 1,
+    borderRadius: 0,
     debug: false,
     image: null,
     isInteractive: true,
@@ -60,6 +61,7 @@ export const Defaults = Object.freeze({
   },
   item: {
     backgroundColor: null,
+    borderRadius: 0,
     image: null,
     imageOpacity: 1,
     imageRadius: 0.5,

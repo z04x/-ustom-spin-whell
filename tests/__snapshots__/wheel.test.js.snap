@@ -4,6 +4,7 @@ exports[`Initial state is correct 1`] = `
 Wheel {
   "_actualRadius": 237.5,
   "_borderColor": "#000",
+  "_borderRadius": 0,
   "_borderWidth": 1,
   "_canvasContainer": <div>
     <canvas

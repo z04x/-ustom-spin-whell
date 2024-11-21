@@ -224,7 +224,7 @@ export class Wheel {
   drawItemBackgrounds(ctx, angles = []) {
     for (const [i, a] of angles.entries()) {
       const item = this._items[i];
-      
+
       ctx.fillStyle = item.backgroundColor ?? (
         this._itemBackgroundColors[i % this._itemBackgroundColors.length]
       );
@@ -234,17 +234,17 @@ export class Wheel {
       const radius = this._actualRadius - (this.getScaledNumber(this._borderWidth) / 2);
       const startAngle = util.degRad(a.start + Constants.arcAdjust);
       const endAngle = util.degRad(a.end + Constants.arcAdjust);
-      
+
       if (item.borderRadius > 0) {
         const borderRadius = this.getScaledNumber(item.borderRadius);
-        
+
         // Начальная точка на внешнем радиусе
         const startX = this._center.x + Math.cos(startAngle) * (radius - borderRadius);
         const startY = this._center.y + Math.sin(startAngle) * (radius - borderRadius);
-        
+
         path.moveTo(this._center.x, this._center.y);
         path.lineTo(startX, startY);
-        
+
         // Рисуем закругленный угол
         path.arc(
           this._center.x + Math.cos(startAngle) * (radius - borderRadius),
@@ -253,7 +253,7 @@ export class Wheel {
           startAngle - Math.PI,
           startAngle
         );
-        
+
         // Рисуем внешнюю дугу
         path.arc(
           this._center.x,
@@ -262,7 +262,7 @@ export class Wheel {
           startAngle,
           endAngle
         );
-        
+
         // Рисуем второй закругленный угол
         path.arc(
           this._center.x + Math.cos(endAngle) * (radius - borderRadius),
@@ -271,7 +271,7 @@ export class Wheel {
           endAngle,
           endAngle + Math.PI
         );
-        
+
         path.closePath();
       } else {
         // Стандартное рисование без скругления

@@ -4,26 +4,18 @@ import {Defaults} from './constants.js';
 export class Item {
 
   constructor(wheel, props = {}) {
-
-    // Validate params.
-    if (!util.isObject(wheel)) throw new Error('wheel must be an instance of Wheel'); // Ideally we would use instanceof, however importing the Wheel class would create a circular ref.
-    if (!util.isObject(props) && props !== null) throw new Error('props must be an Object or null');
+    if (!wheel) {
+      throw new Error('wheel must be an instance of Wheel');
+    }
 
     this._wheel = wheel;
 
-    // Assign default values.
-    // This avoids null exceptions when we initalise each property one-by-one in `init()`.
-    for (const i of Object.keys(Defaults.item)) {
-      this['_' + i] = Defaults.item[i];
+    // Инициализация всех свойств по умолчанию
+    const defaults = {...Defaults.item};
+    for (const [key, value] of Object.entries(defaults)) {
+      const propName = `_${key}`;
+      this[propName] = props?.[key] ?? value;
     }
-
-    if (props) {
-      this.init(props);
-    } else {
-      this.init(Defaults.item);
-    }
-
-    this._borderRadius = props.borderRadius || 0; // custom update
   }
 
   /**
