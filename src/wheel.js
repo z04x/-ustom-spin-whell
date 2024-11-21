@@ -230,51 +230,59 @@ export class Wheel {
             this._itemBackgroundColors[i % this._itemBackgroundColors.length]
         );
 
-        const path = new Path2D();
         const startAngle = util.degRad(a.start + Constants.arcAdjust);
         const endAngle = util.degRad(a.end + Constants.arcAdjust);
-
         const borderRadius = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
 
+        ctx.beginPath();
+
         if (borderRadius > 0) {
-            path.moveTo(this._center.x, this._center.y);
-
-            const innerRadius = borderRadius;
-            const outerRadius = radius;
-
             const startPoint = {
-                x: this._center.x + Math.cos(startAngle) * innerRadius,
-                y: this._center.y + Math.sin(startAngle) * innerRadius,
+                x: this._center.x + Math.cos(startAngle) * (radius - borderRadius),
+                y: this._center.y + Math.sin(startAngle) * (radius - borderRadius),
             };
 
-            const endPoint = {
-                x: this._center.x + Math.cos(endAngle) * innerRadius,
-                y: this._center.y + Math.sin(endAngle) * innerRadius,
-            };
+            ctx.moveTo(this._center.x, this._center.y);
 
-            path.lineTo(startPoint.x, startPoint.y);
+            // Рисуем скругленный путь
+            ctx.lineTo(startPoint.x, startPoint.y);
 
-            path.arc(
-                this._center.x,
-                this._center.y,
-                outerRadius,
+            ctx.arc(
+                startPoint.x,
+                startPoint.y,
+                borderRadius,
+                startAngle - Math.PI,
                 startAngle,
-                endAngle
+                false
             );
 
-            path.lineTo(endPoint.x, endPoint.y);
-
-            path.arc(
+            ctx.arc(
                 this._center.x,
                 this._center.y,
-                innerRadius,
-                endAngle,
+                radius,
                 startAngle,
-                true
+                endAngle,
+                false
+            );
+
+            // Скругление для конечного угла
+            const endPoint = {
+                x: this._center.x + Math.cos(endAngle) * (radius - borderRadius),
+                y: this._center.y + Math.sin(endAngle) * (radius - borderRadius),
+            };
+
+            ctx.arc(
+                endPoint.x,
+                endPoint.y,
+                borderRadius,
+                endAngle,
+                endAngle + Math.PI/2,
+                false
             );
         } else {
-            path.moveTo(this._center.x, this._center.y);
-            path.arc(
+            // Обычный сектор без скругления
+            ctx.moveTo(this._center.x, this._center.y);
+            ctx.arc(
                 this._center.x,
                 this._center.y,
                 radius,
@@ -283,17 +291,14 @@ export class Wheel {
             );
         }
 
-        path.closePath();
-        ctx.fill(path);
+        ctx.closePath();
+        ctx.fill();
 
-        // Добавляем обводку если есть
         if (this._borderWidth > 0) {
             ctx.strokeStyle = this._borderColor;
             ctx.lineWidth = this.getScaledNumber(this._borderWidth);
-            ctx.stroke(path);
+            ctx.stroke();
         }
-
-        item.path = path;
     }
   }
 
