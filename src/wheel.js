@@ -223,47 +223,77 @@ export class Wheel {
 
   drawItemBackgrounds(ctx, angles = []) {
     for (const [i, a] of angles.entries()) {
-      const item = this._items[i];
-      const radius = this._actualRadius - (this.getScaledNumber(this._borderWidth) / 2);
+        const item = this._items[i];
+        const radius = this._actualRadius - (this.getScaledNumber(this._borderWidth) / 2);
 
-      ctx.fillStyle = item.backgroundColor ?? (
-        this._itemBackgroundColors[i % this._itemBackgroundColors.length]
-      );
-
-      const path = new Path2D();
-      const startAngle = util.degRad(a.start + Constants.arcAdjust);
-      const endAngle = util.degRad(a.end + Constants.arcAdjust);
-
-      // Добавляем скругление
-      const borderRadius = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
-
-      path.moveTo(this._center.x, this._center.y);
-      if (borderRadius > 0) {
-        // Внутренняя точка начала скругления
-        const innerStartX = this._center.x + Math.cos(startAngle) * borderRadius;
-        const innerStartY = this._center.y + Math.sin(startAngle) * borderRadius;
-        // Внешняя точка начала скругления
-        const outerStartX = this._center.x + Math.cos(startAngle) * (radius - borderRadius);
-        const outerStartY = this._center.y + Math.sin(startAngle) * (radius - borderRadius);
-        path.lineTo(innerStartX, innerStartY);
-        path.quadraticCurveTo(
-          outerStartX,
-          outerStartY,
-          this._center.x + Math.cos(startAngle) * radius,
-          this._center.y + Math.sin(startAngle) * radius
+        ctx.fillStyle = item.backgroundColor ?? (
+            this._itemBackgroundColors[i % this._itemBackgroundColors.length]
         );
-      } else {
-        path.lineTo(
-          this._center.x + Math.cos(startAngle) * radius,
-          this._center.y + Math.sin(startAngle) * radius
-        );
-      }
 
-      path.arc(this._center.x, this._center.y, radius, startAngle, endAngle);
-      path.closePath();
+        const path = new Path2D();
+        const startAngle = util.degRad(a.start + Constants.arcAdjust);
+        const endAngle = util.degRad(a.end + Constants.arcAdjust);
 
-      ctx.fill(path);
-      item.path = path;
+        const borderRadius = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
+
+        if (borderRadius > 0) {
+            path.moveTo(this._center.x, this._center.y);
+
+            const innerRadius = borderRadius;
+            const outerRadius = radius;
+
+            const startPoint = {
+                x: this._center.x + Math.cos(startAngle) * innerRadius,
+                y: this._center.y + Math.sin(startAngle) * innerRadius,
+            };
+
+            const endPoint = {
+                x: this._center.x + Math.cos(endAngle) * innerRadius,
+                y: this._center.y + Math.sin(endAngle) * innerRadius,
+            };
+
+            path.lineTo(startPoint.x, startPoint.y);
+
+            path.arc(
+                this._center.x,
+                this._center.y,
+                outerRadius,
+                startAngle,
+                endAngle
+            );
+
+            path.lineTo(endPoint.x, endPoint.y);
+
+            path.arc(
+                this._center.x,
+                this._center.y,
+                innerRadius,
+                endAngle,
+                startAngle,
+                true
+            );
+        } else {
+            path.moveTo(this._center.x, this._center.y);
+            path.arc(
+                this._center.x,
+                this._center.y,
+                radius,
+                startAngle,
+                endAngle
+            );
+        }
+
+        path.closePath();
+        ctx.fill(path);
+
+        // Добавляем обводку если есть
+        if (this._borderWidth > 0) {
+            ctx.strokeStyle = this._borderColor;
+            ctx.lineWidth = this.getScaledNumber(this._borderWidth);
+            ctx.stroke(path);
+        }
+
+        item.path = path;
     }
   }
 
