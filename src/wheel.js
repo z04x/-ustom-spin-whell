@@ -232,56 +232,27 @@ export class Wheel {
 
         const startAngle = util.degRad(a.start + Constants.arcAdjust);
         const endAngle = util.degRad(a.end + Constants.arcAdjust);
-        const borderRadius = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
+        const curveIntensity = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
 
         ctx.beginPath();
+        ctx.moveTo(this._center.x, this._center.y);
 
-        if (borderRadius > 0) {
-            const startPoint = {
-                x: this._center.x + Math.cos(startAngle) * (radius - borderRadius),
-                y: this._center.y + Math.sin(startAngle) * (radius - borderRadius),
-            };
+        if (curveIntensity > 0) {
+            // Начальная точка на внешнем радиусе
+            const startX = this._center.x + Math.cos(startAngle) * radius;
+            const startY = this._center.y + Math.sin(startAngle) * radius;
 
-            ctx.moveTo(this._center.x, this._center.y);
+            const endX = this._center.x + Math.cos(endAngle) * radius;
+            const endY = this._center.y + Math.sin(endAngle) * radius;
 
-            // Рисуем скругленный путь
-            ctx.lineTo(startPoint.x, startPoint.y);
+            const midAngle = (startAngle + endAngle) / 2;
+            const controlX = this._center.x + Math.cos(midAngle) * (radius + curveIntensity);
+            const controlY = this._center.y + Math.sin(midAngle) * (radius + curveIntensity);
 
-            ctx.arc(
-                startPoint.x,
-                startPoint.y,
-                borderRadius,
-                startAngle - Math.PI,
-                startAngle,
-                false
-            );
-
-            ctx.arc(
-                this._center.x,
-                this._center.y,
-                radius,
-                startAngle,
-                endAngle,
-                false
-            );
-
-            // Скругление для конечного угла
-            const endPoint = {
-                x: this._center.x + Math.cos(endAngle) * (radius - borderRadius),
-                y: this._center.y + Math.sin(endAngle) * (radius - borderRadius),
-            };
-
-            ctx.arc(
-                endPoint.x,
-                endPoint.y,
-                borderRadius,
-                endAngle,
-                endAngle + Math.PI/2,
-                false
-            );
+            ctx.lineTo(startX, startY);
+            ctx.quadraticCurveTo(controlX, controlY, endX, endY);
         } else {
-            // Обычный сектор без скругления
-            ctx.moveTo(this._center.x, this._center.y);
+
             ctx.arc(
                 this._center.x,
                 this._center.y,
