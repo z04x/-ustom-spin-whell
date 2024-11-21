@@ -232,34 +232,40 @@ export class Wheel {
 
         const startAngle = util.degRad(a.start + Constants.arcAdjust);
         const endAngle = util.degRad(a.end + Constants.arcAdjust);
-        const curveIntensity = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
+        const smoothing = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
 
         ctx.beginPath();
-        ctx.moveTo(this._center.x, this._center.y);
 
-        if (curveIntensity > 0) {
-            // Начальная точка на внешнем радиусе
-            const startX = this._center.x + Math.cos(startAngle) * radius;
-            const startY = this._center.y + Math.sin(startAngle) * radius;
+        const centerX = this._center.x;
+        const centerY = this._center.y;
 
-            const endX = this._center.x + Math.cos(endAngle) * radius;
-            const endY = this._center.y + Math.sin(endAngle) * radius;
+        if (smoothing > 0) {
+            // Внешняя дуга
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
 
-            const midAngle = (startAngle + endAngle) / 2;
-            const controlX = this._center.x + Math.cos(midAngle) * (radius + curveIntensity);
-            const controlY = this._center.y + Math.sin(midAngle) * (radius + curveIntensity);
+            const tipPoint = {
+                x: centerX + Math.cos((startAngle + endAngle) / 2) * (radius - smoothing),
+                y: centerY + Math.sin((startAngle + endAngle) / 2) * (radius - smoothing),
+            };
 
-            ctx.lineTo(startX, startY);
-            ctx.quadraticCurveTo(controlX, controlY, endX, endY);
-        } else {
+            const cp1 = {
+                x: centerX + Math.cos(startAngle) * (radius - smoothing),
+                y: centerY + Math.sin(startAngle) * (radius - smoothing),
+            };
 
-            ctx.arc(
-                this._center.x,
-                this._center.y,
-                radius,
-                startAngle,
-                endAngle
+            const cp2 = {
+                x: centerX + Math.cos(endAngle) * (radius - smoothing),
+                y: centerY + Math.sin(endAngle) * (radius - smoothing),
+            };
+
+            ctx.bezierCurveTo(
+                cp1.x, cp1.y,
+                tipPoint.x, tipPoint.y,
+                centerX, centerY
             );
+        } else {
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.lineTo(centerX, centerY);
         }
 
         ctx.closePath();
