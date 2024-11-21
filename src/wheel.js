@@ -225,47 +225,48 @@ export class Wheel {
     for (const [i, a] of angles.entries()) {
         const item = this._items[i];
         const radius = this._actualRadius - (this.getScaledNumber(this._borderWidth) / 2);
-
         ctx.fillStyle = item.backgroundColor ?? (
             this._itemBackgroundColors[i % this._itemBackgroundColors.length]
         );
 
         const startAngle = util.degRad(a.start + Constants.arcAdjust);
         const endAngle = util.degRad(a.end + Constants.arcAdjust);
-        const smoothing = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
+        const cornerRadius = item.borderRadius ? this.getScaledNumber(item.borderRadius) : 0;
 
         ctx.beginPath();
 
-        const centerX = this._center.x;
-        const centerY = this._center.y;
-
-        if (smoothing > 0) {
-            // Внешняя дуга
-            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-
-            const tipPoint = {
-                x: centerX + Math.cos((startAngle + endAngle) / 2) * (radius - smoothing),
-                y: centerY + Math.sin((startAngle + endAngle) / 2) * (radius - smoothing),
+        if (cornerRadius > 0) {
+            const centerX = this._center.x;
+            const centerY = this._center.y;
+            const outerStart = {
+                x: centerX + Math.cos(startAngle) * radius,
+                y: centerY + Math.sin(startAngle) * radius,
+            };
+            const outerEnd = {
+                x: centerX + Math.cos(endAngle) * radius,
+                y: centerY + Math.sin(endAngle) * radius,
             };
 
-            const cp1 = {
-                x: centerX + Math.cos(startAngle) * (radius - smoothing),
-                y: centerY + Math.sin(startAngle) * (radius - smoothing),
-            };
-
-            const cp2 = {
-                x: centerX + Math.cos(endAngle) * (radius - smoothing),
-                y: centerY + Math.sin(endAngle) * (radius - smoothing),
-            };
-
-            ctx.bezierCurveTo(
-                cp1.x, cp1.y,
-                tipPoint.x, tipPoint.y,
-                centerX, centerY
+            ctx.moveTo(centerX, centerY);
+            ctx.arcTo(
+                outerStart.x, outerStart.y,
+                outerEnd.x, outerEnd.y,
+                cornerRadius
+            );
+            ctx.arcTo(
+                outerEnd.x, outerEnd.y,
+                centerX, centerY,
+                cornerRadius
             );
         } else {
-            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-            ctx.lineTo(centerX, centerY);
+            ctx.moveTo(this._center.x, this._center.y);
+            ctx.arc(
+                this._center.x,
+                this._center.y,
+                radius,
+                startAngle,
+                endAngle
+            );
         }
 
         ctx.closePath();
